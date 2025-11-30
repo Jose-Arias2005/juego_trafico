@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Congestión Mental: Final Definitivo</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; }
+        
+        #contenedor-juego {
+            position: relative; width: 100vw; height: 100vh; overflow: hidden;
+        }
+
+        /* --- ESTILOS COMUNES --- */
+        .pantalla {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; color: white; z-index: 50; 
+            text-align: center; background: black;
+        }
+
+        .oculto { display: none !important; }
+
+        /* --- VIDEOLLAMADA --- */
+        #p-videollamada { background: black; position: relative; }
+        #img-videollamada-fondo {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; opacity: 0.6; z-index: 1;
+        }
+        .overlay-llamada {
+            z-index: 2; background: rgba(0,0,0,0.8); padding: 20px; 
+            border-radius: 10px; border: 1px solid #444; position: absolute; bottom: 10%;
+        }
+
+        /* --- JUEGO (TRÁFICO) --- */
+        #fondo-trafico {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center; z-index: 1;
+            transition: background-image 0.5s ease;
+        }
+
+        #filtro-caos {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 2; transition: all 0.1s ease;
+        }
+
+        #capa-ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; display: flex; flex-direction: column;
+            justify-content: space-between; padding: 20px; box-sizing: border-box;
+        }
+
+        #timer-box {
+            position: absolute; top: 20px; right: 20px;
+            font-size: 40px; font-weight: bold; color: white;
+            background: rgba(0,0,0,0.7); padding: 10px 20px;
+            border: 2px solid red; border-radius: 5px; z-index: 20;
+        }
+
+        #barra-contenedor {
+            width: 100%; max-width: 600px; height: 40px;
+            border: 3px solid white; margin: 0 auto; margin-top: 10px;
+            background: rgba(0,0,0,0.5); position: relative;
+        }
+        #barra-relleno {
+            width: 0%; height: 100%; background: lime;
+            transition: width 0.1s linear; 
+        }
+        #texto-barra {
+            position: absolute; top:0; left:0; width: 100%; text-align: center;
+            color: white; line-height: 40px; font-weight: bold;
+            text-shadow: 1px 1px 2px black; z-index: 2;
+        }
+
+        #decision-box {
+            background: rgba(0, 0, 0, 0.9); color: white;
+            padding: 20px; border-radius: 10px; margin: 0 auto 50px auto;
+            text-align: center; max-width: 800px; border: 1px solid #555;
+            transition: filter 1s ease;
+        }
+        .pregunta { font-size: 24px; margin-bottom: 20px; color: #ffdddd; }
+        .opciones { display: flex; justify-content: space-around; font-size: 20px; }
+        .tecla { color: yellow; font-weight: bold; font-size: 26px; }
+        .texto-borroso { filter: blur(6px); transform: scale(0.95); opacity: 0.7; }
+
+        /* --- FINAL AMBULANCIA REALISTA --- */
+        #p-final {
+            background: black; z-index: 999; 
+            justify-content: flex-start; 
+            padding-top: 100px;
+            overflow: hidden; /* Importante para los parpados */
+        }
+        #img-ambulancia {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1; opacity: 0.6;
+            transition: opacity 2s ease;
+        }
+        
+        /* Párpados OVALADOS */
+        .parpado {
+            position: absolute; left: 0; width: 100%; 
+            background: black; z-index: 10;
+            transition: height 3s ease-in-out; /* Cierre final suave */
+        }
+
+        /* Curva superior hacia abajo */
+        #parpado-superior {
+            top: 0; height: 15%;
+            /* Esto crea la forma ovalada */
+            border-bottom-left-radius: 50% 100%;
+            border-bottom-right-radius: 50% 100%;
+            animation: parpadeoSuperior 7s infinite ease-in-out;
+        }
+
+        /* Curva inferior hacia arriba */
+        #parpado-inferior {
+            bottom: 0; height: 15%;
+            /* Esto crea la forma ovalada */
+            border-top-left-radius: 50% 100%;
+            border-top-right-radius: 50% 100%;
+            animation: parpadeoInferior 7s infinite ease-in-out;
+        }
+
+        /* Animación independiente para que se sienta orgánico */
+        @keyframes parpadeoSuperior {
+            0%, 100% { height: 20%; } 
+            5% { height: 50%; } /* Cierra */
+            10% { height: 10%; } /* Abre susto */
+            40% { height: 35%; } /* Pesado */
+            60% { height: 40%; }
+        }
+        @keyframes parpadeoInferior {
+            0%, 100% { height: 20%; } 
+            5% { height: 50%; } 
+            10% { height: 10%; }
+            40% { height: 35%; }
+            60% { height: 40%; }
+        }
+
+        /* CLASE PARA CERRAR OJOS TOTALMENTE */
+        .cerrar-ojos-total {
+            animation: none !important; /* Detener parpadeo */
+            height: 52% !important; /* Cerrar más de la mitad para solapar */
+            border-radius: 0 !important; /* Se vuelven rectos al tocarse para tapar todo */
+            transition: all 2s ease-in-out;
+        }
+
+        /* Textos flotantes */
+        .frase-delirio {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 20; width: 80%;
+            font-size: 30px; color: white; text-shadow: 0 0 10px red;
+            background: rgba(0,0,0,0.6); padding: 15px; border-radius: 5px;
+            animation: aparecerDesvanecer 3.5s forwards; opacity: 0;
+        }
+
+        /* Texto FINAL FINAL (Mira la caja) */
+        #mensaje-caja {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 30;
+            font-size: 50px; color: white; font-weight: bold; letter-spacing: 5px;
+            opacity: 0; 
+            transition: opacity 2s ease;
+        }
+
+        @keyframes aparecerDesvanecer {
+            0% { opacity: 0; transform: translate(-50%, -40%); }
+            20% { opacity: 1; transform: translate(-50%, -50%); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -60%); }
+        }
+
+        h1 { color: red; text-transform: uppercase; letter-spacing: 5px; }
+        .boton {
+            margin-top: 30px; padding: 15px 30px; border: 2px solid white; 
+            color: white; cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        .boton:hover { background: white; color: black; }
+
+    </style>
+</head>
+<body>
+
+    <audio id="audio-trafico" loop><source src="trafico.mp3" type="audio/mpeg"></audio>
+    <audio id="audio-ambulancia"><source src="ambulancia.mp3" type="audio/mpeg"></audio>
+    <audio id="audio-latido" loop><source src="https://actions.google.com/sounds/v1/horror/heartbeat_fast.ogg" type="audio/ogg"></audio>
+
+    <div id="contenedor-juego">
+        
+        <div id="p-inicio" class="pantalla">
+            <h1>CONGESTIÓN MENTAL</h1>
+            <p>Duración: 30 Segundos</p>
+            <div class="boton" onclick="irInstrucciones()">INICIAR EXPERIENCIA</div>
+        </div>
+
+        <div id="p-instrucciones" class="pantalla oculto">
+            <h2>INSTRUCCIONES</h2>
+            <ul style="text-align: left; font-size: 20px;">
+                <li><strong>[A] / [B]</strong>: Tomar decisiones.</li>
+                <li><strong>ESPACIO (Tap-Tap)</strong>: Intentar respirar.</li>
+            </ul>
+            <p style="color: red; font-size: 16px; margin-top:20px;">ADVERTENCIA: El estrés acumulado puede ser fatal.</p>
+            <div class="boton" onclick="irContexto()">ENTENDIDO</div>
+        </div>
+
+        <div id="p-contexto" class="pantalla oculto">
+            <p>Roberto. 45 años. Hipertensión.</p>
+            <p>Tratando de llegar al cumpleaños de su hija.</p>
+            <div class="boton" onclick="irVideollamada()">CONTINUAR</div>
+        </div>
+
+        <div id="p-videollamada" class="pantalla oculto">
+            <img id="img-videollamada-fondo" src="videollamada.jpg" alt="Llamada">
+            <div class="overlay-llamada">
+                <h3>📞 Hija (Videollamada)</h3>
+                <p>"¡Papá apúrate! Ya van a cortar la torta..."</p>
+            </div>
+        </div>
+
+        <div id="p-transicion" class="pantalla oculto">
+            <h1 style="color: white;">15 MINUTOS DESPUÉS...</h1>
+        </div>
+
+        <div id="fondo-trafico" class="oculto"></div>
+        <div id="filtro-caos" class="oculto"></div>
+        <div id="capa-ui" class="oculto">
+            <div id="timer-box">00:30</div>
+            <div id="barra-contenedor">
+                <div id="barra-relleno"></div>
+                <div id="texto-barra">NIVEL DE ESTRÉS</div>
+            </div>
+            <div id="decision-box">
+                <div id="txt-pregunta" class="pregunta">...</div>
+                <div class="opciones">
+                    <div><span class="tecla">[A]</span> <span id="txt-opcion-a">...</span></div>
+                    <div><span class="tecla">[B]</span> <span id="txt-opcion-b">...</span></div>
+                </div>
+                <p style="font-size: 12px; color: gray; margin-top: 10px;">(Presiona ESPACIO repetidamente)</p>
+            </div>
+        </div>
+
+        <div id="p-final" class="pantalla oculto">
+            <img id="img-ambulancia" src="ambulanciaa.jpg" alt="Ambulancia Interior">
+            
+            <div id="parpado-superior" class="parpado"></div>
+            <div id="parpado-inferior" class="parpado"></div>
+            
+            <div id="contenedor-frases"></div>
+
+            <div id="mensaje-caja">MIRA LA CAJA</div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN ---
+        const duracionJuego = 30; 
+        const imagenesTrafico = [
+            'url("trafico_1.jpg")', 'url("trafico_2.jpg")', 
+            'url("trafico_3.jpg")', 'url("trafico_4.jpg")'
+        ];
+        
+        // Frases que aparecen ANTES de cerrar los ojos
+        const frasesFinales = [
+            "Tus sueños se quedan...",
+            "No llego a la torta...",
+            "Todo está oscuro...",
+            "Perdón, hija...",
+            "Me siento frío...",
+        ];
+
+        const situaciones = [
+            { p: "Una combi te cierra raspando el espejo.", a: "¡Gritar furioso!", b: "Respirar hondo", dañoA: 15, dañoB: 10 },
+            { p: "Policía detiene el tráfico sin razón.", a: "Tocar claxon", b: "Golpear volante", dañoA: 12, dañoB: 12 },
+            { p: "Limpiavidrios te moja el parabrisas sucio.", a: "Insultarlo", b: "Activar limpiaparabrisas", dañoA: 15, dañoB: 8 },
+            { p: "¡Calor insoportable! A/C malogrado.", a: "Maldecir", b: "Bajar ventana (Ruido)", dañoA: 10, dañoB: 15 },
+            { p: "Sientes un pitido fuerte en el oído.", a: "Sacudir cabeza", b: "Cerrar ojos", dañoA: 20, dañoB: 20 },
+            { p: "EL TRÁFICO NO SE MUEVE.", a: "¡¡AAAAHHH!!", b: "Llorar", dañoA: 25, dañoB: 25 }
+        ];
+
+        // --- VARIABLES ---
+        let estres = 0;
+        let indiceSituacion = 0;
+        let tiempoJuegoActual = 0; 
+        let intervaloLoop;
+        let intervaloViolento;
+        let intervaloFrases; 
+        let juegoActivo = false;
+        let curacionEspacio = 4;
+
+        // --- DOM ---
+        const ui = document.getElementById('capa-ui');
+        const fondo = document.getElementById('fondo-trafico');
+        const filtro = document.getElementById('filtro-caos');
+        const barra = document.getElementById('barra-relleno');
+        const timerDisplay = document.getElementById('timer-box');
+        const contenedorFrases = document.getElementById('contenedor-frases');
+        
+        const sndTrafico = document.getElementById('audio-trafico');
+        const sndAmbulancia = document.getElementById('audio-ambulancia');
+        const sndLatido = document.getElementById('audio-latido');
+
+        // --- NAVEGACIÓN ---
+        function irInstrucciones() {
+            document.getElementById('p-inicio').classList.add('oculto');
+            document.getElementById('p-instrucciones').classList.remove('oculto');
+        }
+        function irContexto() {
+            document.getElementById('p-instrucciones').classList.add('oculto');
+            document.getElementById('p-contexto').classList.remove('oculto');
+        }
+        function irVideollamada() {
+            document.getElementById('p-contexto').classList.add('oculto');
+            document.getElementById('p-videollamada').classList.remove('oculto');
+            setTimeout(() => { irTransicion(); }, 4000);
+        }
+        function irTransicion() {
+            document.getElementById('p-videollamada').classList.add('oculto');
+            document.getElementById('p-transicion').classList.remove('oculto');
+            setTimeout(() => { iniciarJuegoReal(); }, 2000);
+        }
+
+        // --- LÓGICA JUEGO ---
+        function iniciarJuegoReal() {
+            document.getElementById('p-transicion').classList.add('oculto');
+            
+            ui.classList.remove('oculto');
+            fondo.classList.remove('oculto');
+            filtro.classList.remove('oculto');
+
+            try { sndTrafico.volume = 0.3; sndTrafico.play(); } catch(e){}
+            try { sndLatido.volume = 0.2; sndLatido.play(); } catch(e){}
+
+            juegoActivo = true;
+            estres = 0;
+            tiempoJuegoActual = 0;
+            curacionEspacio = 4;
+            
+            cambiarFondo();
+            cargarPregunta();
+
+            intervaloLoop = setInterval(buclePrincipal, 1000);
+            intervaloViolento = setInterval(bucleRapido, 100);
+            
+            window.addEventListener('keydown', controlarTeclado);
+        }
+
+        function bucleRapido() {
+            if (!juegoActivo) return;
+            // FINAL VIOLENTO (ÚLTIMOS 3 SEGUNDOS)
+            if (tiempoJuegoActual >= (duracionJuego - 3)) {
+                estres += 2.5; 
+                actualizarGraficos();
+            }
+            if (estres >= 100) colapsoTotal();
+        }
+
+        function buclePrincipal() {
+            if (!juegoActivo) return;
+            tiempoJuegoActual++;
+
+            let tiempoRestante = duracionJuego - tiempoJuegoActual;
+            if (tiempoRestante < 0) tiempoRestante = 0;
+            timerDisplay.innerText = `00:${tiempoRestante < 10 ? '0'+tiempoRestante : tiempoRestante}`;
+
+            let subidaPasiva = 2 + (tiempoJuegoActual / 5); 
+            estres += subidaPasiva;
+
+            curacionEspacio = 4 - (tiempoJuegoActual / 7);
+            if (curacionEspacio < 0) curacionEspacio = 0;
+
+            if (sndTrafico.volume < 1.0) sndTrafico.volume += 0.02;
+            if (sndLatido.volume < 1.0) sndLatido.volume += 0.03;
+
+            if (tiempoJuegoActual % 4 === 0) cambiarFondo();
+
+            if (tiempoJuegoActual >= (duracionJuego - 8)) {
+                document.getElementById('decision-box').classList.add('texto-borroso');
+                document.getElementById('txt-pregunta').innerText = "ME DUELE... NO VEO NADA...";
+                document.getElementById('txt-pregunta').style.color = "red";
+                timerDisplay.style.color = "red";
+                timerDisplay.style.borderColor = "red";
+            }
+            actualizarGraficos();
+            if (tiempoJuegoActual >= duracionJuego) colapsoTotal();
+        }
+
+        function controlarTeclado(e) {
+            if (!juegoActivo) return;
+            if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'b') {
+                let sit = situaciones[indiceSituacion];
+                let daño = (e.key.toLowerCase() === 'a') ? sit.dañoA : sit.dañoB;
+                estres += daño + (tiempoJuegoActual / 5);
+                flashPantalla();
+                indiceSituacion++;
+                if (indiceSituacion >= situaciones.length) indiceSituacion = 0;
+                cambiarFondo();
+                cargarPregunta();
+                actualizarGraficos();
+            }
+            if (e.code === 'Space' && !e.repeat) {
+                if (tiempoJuegoActual < (duracionJuego - 3)) {
+                    estres -= curacionEspacio;
+                    if (estres < 0) estres = 0;
+                    actualizarGraficos();
+                }
+            }
+        }
+
+        function cambiarFondo() {
+            const img = imagenesTrafico[Math.floor(Math.random() * imagenesTrafico.length)];
+            fondo.style.backgroundImage = img;
+        }
+
+        function flashPantalla() {
+            filtro.style.background = "rgba(255,0,0,0.6)";
+            setTimeout(() => actualizarGraficos(), 100);
+        }
+
+        function actualizarGraficos() {
+            if (!juegoActivo) return;
+            if (estres > 100) estres = 100;
+            barra.style.width = estres + '%';
+            if (estres < 50) barra.style.background = "lime";
+            else if (estres < 80) barra.style.background = "orange";
+            else barra.style.background = "red";
+
+            let factorProgreso = estres / 100;
+            let blurAmount = Math.pow(factorProgreso, 2.5) * 10; 
+            let redOpacity = Math.pow(factorProgreso, 2) * 0.6;
+
+            filtro.style.backdropFilter = `blur(${blurAmount}px)`;
+            filtro.style.background = `rgba(255, 0, 0, ${redOpacity})`;
+        }
+
+        function colapsoTotal() {
+            if (!juegoActivo) return; 
+            juegoActivo = false;
+            clearInterval(intervaloLoop);
+            clearInterval(intervaloViolento);
+            window.removeEventListener('keydown', controlarTeclado);
+
+            // LIMPIEZA VISUAL
+            ui.classList.add('oculto');
+            fondo.classList.add('oculto');
+            filtro.classList.add('oculto'); filtro.style.display = 'none'; 
+
+            // MOSTRAR AMBULANCIA
+            document.getElementById('p-final').classList.remove('oculto');
+
+            // INICIAR SECUENCIA DE FRASES
+            setTimeout(mostrarFraseAleatoria, 1000); 
+
+            // AUDIO
+            try { sndTrafico.pause(); } catch(e) {}
+            try { sndLatido.pause(); } catch(e) {}
+            setTimeout(() => {
+                try { sndAmbulancia.volume = 1.0; sndAmbulancia.play(); } catch(e) {}
+            }, 500);
+        }
+
+        // Función recursiva para mostrar frases una tras otra
+        function mostrarFraseAleatoria() {
+            if(frasesFinales.length > 0) {
+                // Sacar la primera frase disponible
+                const texto = frasesFinales.shift(); 
+                
+                const fraseDiv = document.createElement('div');
+                fraseDiv.innerText = texto;
+                fraseDiv.classList.add('frase-delirio');
+                contenedorFrases.appendChild(fraseDiv);
+
+                // Borrar frase tras 3.5s y llamar a la siguiente
+                setTimeout(() => {
+                    fraseDiv.remove();
+                    mostrarFraseAleatoria(); // Llamada recursiva
+                }, 3500);
+            } else {
+                // YA NO HAY FRASES -> CERRAR OJOS TOTALMENTE
+                cerrarOjosParaSiempre();
+            }
+        }
+
+        function cerrarOjosParaSiempre() {
+            // 1. Cerrar los párpados
+            const pSup = document.getElementById('parpado-superior');
+            const pInf = document.getElementById('parpado-inferior');
+            
+            pSup.classList.add('cerrar-ojos-total');
+            pInf.classList.add('cerrar-ojos-total');
+
+            // 2. Apagar la imagen de fondo de la ambulancia
+            document.getElementById('img-ambulancia').style.opacity = '0';
+
+            // 3. Mostrar el texto final tras el cierre (2 seg)
+            setTimeout(() => {
+                document.getElementById('mensaje-caja').style.opacity = '1';
+            }, 2500);
+        }
+
+        function cargarPregunta() {
+            let s = situaciones[indiceSituacion];
+            document.getElementById('txt-pregunta').innerText = s.p;
+            document.getElementById('txt-opcion-a').innerText = s.a;
+            document.getElementById('txt-opcion-b').innerText = s.b;
+        }
+    </script>
+</body>
+</html>
