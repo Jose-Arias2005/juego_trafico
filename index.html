@@ -82,55 +82,53 @@
         .tecla { color: yellow; font-weight: bold; font-size: 26px; }
         .texto-borroso { filter: blur(6px); transform: scale(0.95); opacity: 0.7; }
 
-        /* --- FINAL AMBULANCIA REALISTA --- */
+        /* --- FINAL AMBULANCIA --- */
         #p-final {
             background: black; z-index: 999; 
             justify-content: flex-start; 
             padding-top: 100px;
-            overflow: hidden; /* Importante para los parpados */
+            overflow: hidden; 
         }
         #img-ambulancia {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             object-fit: cover; z-index: 1; opacity: 0.6;
             transition: opacity 2s ease;
+            filter: blur(5px); /* AMBULANCIA BORROSA */
         }
         
-        /* Párpados OVALADOS */
+        /* PÁRPADOS CORREGIDOS (Curva hacia adentro) */
         .parpado {
             position: absolute; left: 0; width: 100%; 
             background: black; z-index: 10;
-            transition: height 3s ease-in-out; /* Cierre final suave */
+            transition: height 3s ease-in-out; 
         }
 
-        /* Curva superior hacia abajo */
+        /* Párpado Superior: Curva cóncava */
         #parpado-superior {
             top: 0; height: 15%;
-            /* Esto crea la forma ovalada */
             border-bottom-left-radius: 50% 100%;
             border-bottom-right-radius: 50% 100%;
             animation: parpadeoSuperior 7s infinite ease-in-out;
         }
 
-        /* Curva inferior hacia arriba */
+        /* Párpado Inferior: Curva cóncava */
         #parpado-inferior {
             bottom: 0; height: 15%;
-            /* Esto crea la forma ovalada */
             border-top-left-radius: 50% 100%;
             border-top-right-radius: 50% 100%;
             animation: parpadeoInferior 7s infinite ease-in-out;
         }
 
-        /* Animación independiente para que se sienta orgánico */
         @keyframes parpadeoSuperior {
-            0%, 100% { height: 20%; } 
-            5% { height: 50%; } /* Cierra */
-            10% { height: 10%; } /* Abre susto */
-            40% { height: 35%; } /* Pesado */
+            0%, 100% { height: 20%; border-bottom-left-radius: 50% 40%; border-bottom-right-radius: 50% 40%; } 
+            5% { height: 50%; border-bottom-left-radius: 0; border-bottom-right-radius: 0; } /* Cierra plano */
+            10% { height: 10%; } /* Abre */
+            40% { height: 35%; } 
             60% { height: 40%; }
         }
         @keyframes parpadeoInferior {
-            0%, 100% { height: 20%; } 
-            5% { height: 50%; } 
+            0%, 100% { height: 20%; border-top-left-radius: 50% 40%; border-top-right-radius: 50% 40%; } 
+            5% { height: 50%; border-top-left-radius: 0; border-top-right-radius: 0; } 
             10% { height: 10%; }
             40% { height: 35%; }
             60% { height: 40%; }
@@ -138,9 +136,9 @@
 
         /* CLASE PARA CERRAR OJOS TOTALMENTE */
         .cerrar-ojos-total {
-            animation: none !important; /* Detener parpadeo */
-            height: 52% !important; /* Cerrar más de la mitad para solapar */
-            border-radius: 0 !important; /* Se vuelven rectos al tocarse para tapar todo */
+            animation: none !important; 
+            height: 52% !important; 
+            border-radius: 0 !important; /* Al cerrar total se vuelven rectos para tapar */
             transition: all 2s ease-in-out;
         }
 
@@ -153,7 +151,7 @@
             animation: aparecerDesvanecer 3.5s forwards; opacity: 0;
         }
 
-        /* Texto FINAL FINAL (Mira la caja) */
+        /* Texto FINAL */
         #mensaje-caja {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 30;
@@ -258,7 +256,6 @@
             'url("trafico_3.jpg")', 'url("trafico_4.jpg")'
         ];
         
-        // Frases que aparecen ANTES de cerrar los ojos
         const frasesFinales = [
             "Tus sueños se quedan...",
             "No llego a la torta...",
@@ -457,10 +454,8 @@
             }, 500);
         }
 
-        // Función recursiva para mostrar frases una tras otra
         function mostrarFraseAleatoria() {
             if(frasesFinales.length > 0) {
-                // Sacar la primera frase disponible
                 const texto = frasesFinales.shift(); 
                 
                 const fraseDiv = document.createElement('div');
@@ -468,29 +463,24 @@
                 fraseDiv.classList.add('frase-delirio');
                 contenedorFrases.appendChild(fraseDiv);
 
-                // Borrar frase tras 3.5s y llamar a la siguiente
                 setTimeout(() => {
                     fraseDiv.remove();
-                    mostrarFraseAleatoria(); // Llamada recursiva
+                    mostrarFraseAleatoria(); 
                 }, 3500);
             } else {
-                // YA NO HAY FRASES -> CERRAR OJOS TOTALMENTE
                 cerrarOjosParaSiempre();
             }
         }
 
         function cerrarOjosParaSiempre() {
-            // 1. Cerrar los párpados
             const pSup = document.getElementById('parpado-superior');
             const pInf = document.getElementById('parpado-inferior');
             
             pSup.classList.add('cerrar-ojos-total');
             pInf.classList.add('cerrar-ojos-total');
 
-            // 2. Apagar la imagen de fondo de la ambulancia
             document.getElementById('img-ambulancia').style.opacity = '0';
 
-            // 3. Mostrar el texto final tras el cierre (2 seg)
             setTimeout(() => {
                 document.getElementById('mensaje-caja').style.opacity = '1';
             }, 2500);
